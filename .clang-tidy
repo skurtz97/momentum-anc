@@ -1,0 +1,54 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  cert-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+
+  -bugprone-easilby-swappable-parameters,
+  -cert-err33-c,
+  -misc-include-cleaner,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity
+
+WarningsAsErrors: ''
+HeaderFilterRegex:  '.*/(src|include)/.*\.h$'
+ExcludeHeaderFilterRegex: '^/user/'
+FormatStyle: file
+SystemHeaders: false
+UseColor: true
+
+CheckOptions:
+  # naming: GLib C convention, matching .clang-format
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.TypedefCase                  
+    value: CamelCase                                                
+  - key: readability-identifier-naming.EnumCase                     
+    value: CamelCase                                                
+  - key: readability-identifier-naming.EnumConstantCase             
+    value: UPPER_CASE                                               
+  - key: readability-identifier-naming.MacroDefinitionCase          
+    value: UPPER_CASE                                               
+  - key: readability-identifier-naming.GlobalConstantCase           
+    value: UPPER_CASE
+
+  # a frame parser is short; nudge it before it rots
+  - key: readability-function-size.LineThreshold                    
+    value: '80'                                                     
+  - key: readability-function-size.StatementThreshold               
+    value: '60'
+  
+  # unchecked socket/file I/O is the class of bug that matters a lot here
+  - key: bugprone-unused-return-value.CheckedFunctions
+    value: '::read;::write;::close;::recv;::send'
