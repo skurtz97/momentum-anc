@@ -11,9 +11,9 @@ static AdwSwitchRow* find_switch(GtkWidget* root, const char* title) {
 	for (GtkWidget* c = gtk_widget_get_first_child(root); c != NULL;
 	     c = gtk_widget_get_next_sibling(c)) {
 		if (ADW_IS_SWITCH_ROW(c) &&
-		    g_strcmp0(adw_preferences_row_get_title(
-				  ADW_PREFERENCES_ROW(c)),
-			      title) == 0) {
+		    g_strcmp0(
+			adw_preferences_row_get_title(ADW_PREFERENCES_ROW(c)),
+			title) == 0) {
 			return ADW_SWITCH_ROW(c);
 		}
 		AdwSwitchRow* found = find_switch(c, title);
@@ -27,9 +27,8 @@ static AdwSwitchRow* find_switch(GtkWidget* root, const char* title) {
 int main(void) {
 	gtk_init();
 
-	AdwApplication* app =
-	    adw_application_new("io.github.momentum_anc.Test",
-				G_APPLICATION_NON_UNIQUE);
+	AdwApplication* app = adw_application_new("io.github.momentum_anc.Test",
+						  G_APPLICATION_NON_UNIQUE);
 	if (!g_application_register(G_APPLICATION(app), NULL, NULL)) {
 		fprintf(stderr, "cannot register the test application\n");
 		return 1;

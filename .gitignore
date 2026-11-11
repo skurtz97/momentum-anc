@@ -2,7 +2,5 @@ build/
 .vscode/
 build-deb/
 build-rpm/
-build-flatpak/
-.flatpak-builder/
 *.deb
 *.rpm
