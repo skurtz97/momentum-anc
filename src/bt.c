@@ -73,7 +73,8 @@ int bt_find_device(char* out, size_t len) {
 		    g_variant_lookup(props, "Address", "&s", &address) &&
 		    address && strlen(address) < len) {
 			gboolean connected = FALSE;
-			(void)g_variant_lookup(props, "Connected", "b", &connected);
+			(void)g_variant_lookup(props, "Connected", "b",
+					       &connected);
 			/* prefer a headset that is already up */
 			if (connected || !found) {
 				g_strlcpy(out, address, len);
