@@ -73,7 +73,8 @@ static void send_field(struct mc_window* w, gaia_field field, int value) {
 	if (w->syncing) {
 		return;
 	}
-	if (!mc_session_set(w->session, field, value)) {
+	/* no --device match leaves the window without a session */
+	if (w->session == NULL || !mc_session_set(w->session, field, value)) {
 		adw_window_title_set_subtitle(w->title, "Not connected");
 	}
 }
@@ -169,6 +170,8 @@ static void on_destroy(GtkWidget* widget, gpointer data) {
 	if (w->session != NULL) {
 		mc_session_stop(w->session);
 	}
+	g_free(w->mac);
+	g_free(w);
 }
 GtkWidget* mc_window_new(GtkApplication* app, const char* mac) {
 	GtkWidget* window = adw_application_window_new(app);
@@ -203,6 +206,9 @@ GtkWidget* mc_window_new(GtkApplication* app, const char* mac) {
 	} else {
 		adw_window_title_set_subtitle(
 		    w->title, "No paired Momentum found (use --device)");
+		gtk_widget_set_sensitive(GTK_WIDGET(w->anc), false);
+		gtk_widget_set_sensitive(GTK_WIDGET(w->adaptive), false);
+		gtk_widget_set_sensitive(GTK_WIDGET(w->transparency), false);
 	}
 
 	g_signal_connect(window, "destroy", G_CALLBACK(on_destroy), w);
