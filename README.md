@@ -62,6 +62,29 @@ sudo meson install -C build
 
 For a local, uninstalled run: `./build/src/momentum-anc`.
 
+## Testing
+
+`meson test` runs the GAIA codec tests and a headless UI test that builds the window
+without a device, so it covers the paths that used to crash on a missing session. Both
+run again under valgrind memcheck, which fails on any invalid access or definite leak:
+
+```sh
+meson test -C build                    # codec + UI, then both under valgrind
+meson test -C build --suite valgrind   # only the memcheck runs
+```
+
+The UI test needs a display for GTK; without `xvfb-run` it is skipped, and the valgrind
+runs are skipped when valgrind is not installed.
+
+For ASan and UBSan:
+
+```sh
+meson setup build-asan -Db_sanitize=address,undefined --buildtype=debug
+meson test -C build-asan --no-suite valgrind
+```
+
+Memcheck and ASan do not mix, hence dropping the valgrind suite there.
+
 ## Usage
 
 ```sh

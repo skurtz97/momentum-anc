@@ -53,16 +53,22 @@ static gboolean deliver(gpointer p) {
 	struct post* m = p;
 	mc_session* s = m->self;
 
-	switch (m->kind) {
-		case POST_CONNECTED:
-			s->ev->connected(s->data);
-			break;
-		case POST_DISCONNECTED:
-			s->ev->disconnected(s->data, m->reason);
-			break;
-		case POST_CHANGED:
-			s->ev->changed(s->data, m->field, m->value);
-			break;
+	g_mutex_lock(&s->lock);
+	const mc_events* ev = s->ev;
+	g_mutex_unlock(&s->lock);
+
+	if (ev != NULL) { /* a stopped session drops its queued events */
+		switch (m->kind) {
+			case POST_CONNECTED:
+				ev->connected(s->data);
+				break;
+			case POST_DISCONNECTED:
+				ev->disconnected(s->data, m->reason);
+				break;
+			case POST_CHANGED:
+				ev->changed(s->data, m->field, m->value);
+				break;
+		}
 	}
 
 	g_free(m->reason);
@@ -171,6 +177,7 @@ mc_session* mc_session_new(const mc_events* ev, void* data, const char* mac) {
 void mc_session_stop(mc_session* s) {
 	g_mutex_lock(&s->lock);
 	s->stop = true;
+	s->ev = NULL; /* the caller may free its data after this */
 	const int fd = s->fd;
 	g_mutex_unlock(&s->lock);
 
