@@ -122,6 +122,20 @@ flatpak run --user --command=flatpak-builder org.flatpak.Builder \
 When the runtime lives in the user installation but the builder looks in the system
 one, add `--env=FLATPAK_SYSTEM_DIR=$HOME/.local/share/flatpak` to that command.
 
+The builder app also leaves `/app/bin/flatpak` in the exported launcher, and GLib
+drops such an entry completely, so the app never appears in the GNOME app grid (it
+shadows the RPM's copy of the same `.desktop` file, which is fine on its own). Fix
+the export after installing:
+
+```sh
+sed -i 's|^Exec=/app/bin/flatpak |Exec=/usr/bin/flatpak |' \
+    ~/.local/share/flatpak/app/io.github.momentum_anc/current/active/export/share/applications/io.github.momentum_anc.desktop
+update-desktop-database ~/.local/share/flatpak/exports/share/applications
+```
+
+A `flatpak-builder` from the distro writes `Exec=/usr/bin/flatpak …` itself, so
+installing that instead avoids the patch.
+
 The sandbox gets three things it needs: `--allow=bluetooth` for the RFCOMM socket,
 `--system-talk-name=org.bluez` so it can find the paired headset, and the usual
 Wayland/X11 plus DRI arguments for the window. Without the Bluetooth permission the
