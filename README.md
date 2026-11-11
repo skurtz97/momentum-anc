@@ -8,6 +8,9 @@ Bluetooth (GAIA v3 over RFCOMM), so it needs no account, no phone, and no networ
 The full protocol notes — frame format, every command id, captures from real
 hardware — are in [`docs/protocol.md`](docs/protocol.md).
 
+<img width="484" height="921" alt="image" src="https://github.com/user-attachments/assets/dc4fd4d3-88fc-4edc-a0ec-554065f55443" />
+
+
 ## Features
 
 | control | status |
