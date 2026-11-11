@@ -4,6 +4,7 @@
 #include <bluetooth/rfcomm.h>
 #include <errno.h>
 #include <gio/gio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -47,7 +48,7 @@ int bt_find_device(char* out, size_t len) {
 
 	GVariant* objs = g_dbus_connection_call_sync(
 	    bus, "org.bluez", "/", "org.freedesktop.DBus.ObjectManager",
-	    "GetManagedObjects", NULL, G_VARIANT_TYPE("(a{oa{sv}})"),
+	    "GetManagedObjects", NULL, G_VARIANT_TYPE("(a{oa{sa{sv}}})"),
 	    G_DBUS_CALL_FLAGS_NONE, -1, NULL, &err);
 	g_object_unref(bus);
 	if (!objs) {
@@ -55,27 +56,39 @@ int bt_find_device(char* out, size_t len) {
 		return -1;
 	}
 
-	int found = -1;
+	bool found = false;
+	bool found_connected = false;
 	GVariant* managed = g_variant_get_child_value(objs, 0);
 	const size_t n = g_variant_n_children(managed);
-	for (size_t i = 0; i < n && found < 0; i++) {
+	for (size_t i = 0; i < n && !found_connected; i++) {
 		GVariant* entry = g_variant_get_child_value(managed, i);
-		GVariant* props = g_variant_get_child_value(entry, 1);
+		GVariant* ifaces = g_variant_get_child_value(entry, 1);
+		GVariant* props = g_variant_lookup_value(
+		    ifaces, "org.bluez.Device1", G_VARIANT_TYPE_VARDICT);
 		const char *alias = NULL, *address = NULL;
 
 		/* the GAIA uuid is not advertised, the name is what we get */
-		if (g_variant_lookup(props, "Alias", "&s", &alias) && alias &&
-		    g_ascii_strncasecmp(alias, "MOMENTUM", 8) == 0 &&
+		if (props && g_variant_lookup(props, "Alias", "&s", &alias) &&
+		    alias && g_ascii_strncasecmp(alias, "MOMENTUM", 8) == 0 &&
 		    g_variant_lookup(props, "Address", "&s", &address) &&
 		    address && strlen(address) < len) {
-			g_strlcpy(out, address, len);
-			found = 0;
+			gboolean connected = FALSE;
+			(void)g_variant_lookup(props, "Connected", "b", &connected);
+			/* prefer a headset that is already up */
+			if (connected || !found) {
+				g_strlcpy(out, address, len);
+				found = true;
+				found_connected = connected != FALSE;
+			}
 		}
-		g_variant_unref(props);
+		if (props) {
+			g_variant_unref(props);
+		}
+		g_variant_unref(ifaces);
 		g_variant_unref(entry);
 	}
 
 	g_variant_unref(managed);
 	g_variant_unref(objs);
-	return found;
+	return found ? 0 : -1;
 }
