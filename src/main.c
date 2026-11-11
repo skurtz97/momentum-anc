@@ -3,7 +3,6 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
-#include "bt.h"
 #include "ui.h"
 
 /* Pulls --device out of argv so GtkApplication sees only its own options. */
@@ -37,12 +36,8 @@ static void on_activate(GtkApplication* app, gpointer data) {
 }
 
 int main(int argc, char** argv) {
-	char found[18] = {0};
+	/* without --device the window looks for the headset itself */
 	const char* mac = take_device(&argc, argv);
-
-	if (mac == NULL && bt_find_device(found, sizeof found) == 0) {
-		mac = found;
-	}
 
 	GtkApplication* app = GTK_APPLICATION(adw_application_new(
 	    "io.github.momentum_anc", G_APPLICATION_DEFAULT_FLAGS));

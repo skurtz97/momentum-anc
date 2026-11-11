@@ -76,6 +76,38 @@ int main(void) {
 	assert(gaia_decode(&f, fields, values, 2) == 1);
 	assert(fields[0] == GAIA_FIELD_BATTERY && values[0] == 100);
 
+	/* decode: firmware 3.38.3 as three u16s */
+	const uint8_t fw[] = {0xFF, 0x03, 0x00, 0x06, 0x04, 0x95, 0x13, 0x01,
+			      0x00, 0x03, 0x00, 0x26, 0x00, 0x03,
+			      };
+	assert(gaia_parse(fw, sizeof fw, &f) == 14);
+	assert(gaia_decode(&f, fields, values, 2) == 1);
+	assert(fields[0] == GAIA_FIELD_FIRMWARE && values[0] == 33803);
+
+	/* decode: bass boost, and a short firmware reply is refused */
+	const uint8_t bass[] = {0xFF, 0x03, 0x00, 0x01, 0x04, 0x95, 0x11, 0x09, 1};
+	assert(gaia_parse(bass, sizeof bass, &f) == 9);
+	assert(gaia_decode(&f, fields, values, 2) == 1);
+	assert(fields[0] == GAIA_FIELD_BASS && values[0] == 1);
+	const uint8_t short_fw[] = {0xFF, 0x03, 0x00, 0x01, 0x04,
+				    0x95, 0x13, 0x01, 0x03};
+	assert(gaia_parse(short_fw, sizeof short_fw, &f) == 9);
+	assert(gaia_decode(&f, fields, values, 2) == 0);
+
+	/* equalizer: band set carries the band and a signed millibel gain */
+	assert(gaia_set_field(GAIA_FIELD_EQ_BAND0, -30, out, sizeof out) == 10);
+	assert(out[6] == 0x10 && out[7] == 0x01);
+	assert(out[8] == 0x00 && out[9] == 0xE2); /* -3 dB */
+	assert(gaia_get_field(GAIA_FIELD_EQ_BAND3, out, sizeof out) == 9);
+	assert(out[6] == 0x10 && out[7] == 0x02 && out[8] == 0x03);
+
+	/* equalizer: the reply has no band in it, so decode leaves it alone */
+	const uint8_t band[] = {0xFF, 0x03, 0x00, 0x01, 0x04, 0x95, 0x11, 0x02,
+				0xE2,
+			      };
+	assert(gaia_parse(band, sizeof band, &f) == 9);
+	assert(gaia_decode(&f, fields, values, 2) == 0);
+
 	puts("gaia: ok");
 	return 0;
 }
