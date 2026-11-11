@@ -1,0 +1,23 @@
+app-id: io.github.momentum_anc
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: momentum-anc
+
+finish-args:
+  # windowing
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # AF_BLUETOOTH sockets for the RFCOMM link to the headset
+  - --allow=bluetooth
+  # BlueZ is needed to find the paired device by name
+  - --system-talk-name=org.bluez
+
+modules:
+  - name: momentum-anc
+    buildsystem: meson
+    sources:
+      - type: dir
+        path: ../..

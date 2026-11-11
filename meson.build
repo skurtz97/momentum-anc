@@ -23,3 +23,16 @@ gtk4 = dependency('gtk4', version: '>=4.16')
 adwaita = dependency('libadwaita-1', version: '>=1.6')
 
 subdir('src')
+
+install_data(
+  'data/io.github.momentum_anc.desktop',
+  install_dir: get_option('datadir') / 'applications',
+)
+install_data(
+  'data/io.github.momentum_anc.metainfo.xml',
+  install_dir: get_option('datadir') / 'metainfo',
+)
+install_data(
+  'data/io.github.momentum_anc.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/apps',
+)

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Momentum ANC
+Comment=Control noise cancellation on the Sennheiser MOMENTUM 4
+Exec=momentum-anc
+Icon=io.github.momentum_anc
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;
+Keywords=headphones;ANC;Sennheiser;Momentum;
+StartupNotify=true

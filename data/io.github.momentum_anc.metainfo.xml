@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.momentum_anc</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Momentum ANC</name>
+  <summary>Control noise cancellation on the Sennheiser MOMENTUM 4</summary>
+  <description>
+    <p>
+      Small GTK 4 application that talks to a paired Sennheiser MOMENTUM 4 over
+      Bluetooth Classic and controls it directly.
+    </p>
+    <ul>
+      <li>Active noise cancellation and transparency, on or off</li>
+      <li>Adaptive noise cancellation</li>
+      <li>Battery level</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.momentum_anc.desktop</launchable>
+  <provides>
+    <binary>momentum-anc</binary>
+  </provides>
+  <url type="homepage">https://github.com/skurtz97/momentum-anc</url>
+  <categories>
+    <category>Settings</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-11"/>
+  </releases>
+</component>
