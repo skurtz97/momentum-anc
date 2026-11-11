@@ -35,6 +35,7 @@ adaptive mode, and shows the battery level.
 %meson_install
 
 %files
+%license LICENSE
 %{_bindir}/momentum-anc
 %{_datadir}/applications/io.github.momentum_anc.desktop
 %{_datadir}/metainfo/io.github.momentum_anc.metainfo.xml
