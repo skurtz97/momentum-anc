@@ -17,16 +17,15 @@ struct mc_window {
 	GtkLabel* firmware;
 	mc_session* session;
 	char* mac;
-	bool syncing; /* true while the headset's values are pushed into the
-			 rows */
+	bool syncing;	  /* true while the headset's values are pushed into the
+			     rows */
 	mc_events events; /* the session keeps a pointer to this */
 };
 
 /* Everything that only makes sense with a link to the headset. */
 static void set_rows(struct mc_window* w, bool sensitive) {
 	GtkWidget* rows[] = {GTK_WIDGET(w->anc), GTK_WIDGET(w->adaptive),
-			     GTK_WIDGET(w->transparency),
-			     GTK_WIDGET(w->bass)};
+			     GTK_WIDGET(w->transparency), GTK_WIDGET(w->bass)};
 
 	for (size_t i = 0; i < G_N_ELEMENTS(rows); i++) {
 		gtk_widget_set_sensitive(rows[i], sensitive);
@@ -69,9 +68,9 @@ static void on_changed(void* data, gaia_field field, int value) {
 			break;
 		}
 		case GAIA_FIELD_FIRMWARE: {
-			g_autofree char* text = g_strdup_printf(
-			    "%d.%d.%d", value / 10000, value / 100 % 100,
-			    value % 100);
+			g_autofree char* text =
+			    g_strdup_printf("%d.%d.%d", value / 10000,
+					    value / 100 % 100, value % 100);
 			gtk_label_set_text(w->firmware, text);
 			break;
 		}
@@ -92,9 +91,9 @@ static void on_changed(void* data, gaia_field field, int value) {
 		case GAIA_FIELD_EQ_BAND2:
 		case GAIA_FIELD_EQ_BAND3:
 		case GAIA_FIELD_EQ_BAND4:
-			gtk_range_set_value(GTK_RANGE(w->eq[field -
-							     GAIA_FIELD_EQ_BAND0]),
-					    value / 10.0);
+			gtk_range_set_value(
+			    GTK_RANGE(w->eq[field - GAIA_FIELD_EQ_BAND0]),
+			    value / 10.0);
 			break;
 	}
 	w->syncing = false;
@@ -235,7 +234,7 @@ static GtkWidget* build_content(struct mc_window* w) {
 
 	/* equalizer */
 	static const char* bands[GAIA_EQ_BANDS] = {"50 Hz", "250 Hz", "800 Hz",
-						  "3 kHz", "8 kHz"};
+						   "3 kHz", "8 kHz"};
 	AdwPreferencesGroup* eq_group =
 	    ADW_PREFERENCES_GROUP(adw_preferences_group_new());
 	adw_preferences_group_set_title(eq_group, "Equalizer");
@@ -247,8 +246,8 @@ static GtkWidget* build_content(struct mc_window* w) {
 			 w);
 	adw_preferences_group_add(eq_group, GTK_WIDGET(w->bass));
 	for (int i = 0; i < GAIA_EQ_BANDS; i++) {
-		adw_preferences_group_add(eq_group,
-					  GTK_WIDGET(build_eq_row(w, bands[i], i)));
+		adw_preferences_group_add(
+		    eq_group, GTK_WIDGET(build_eq_row(w, bands[i], i)));
 	}
 	adw_preferences_page_add(page, eq_group);
 
@@ -302,7 +301,8 @@ GtkWidget* mc_window_new(GtkApplication* app, const char* mac) {
 					   GTK_WIDGET(view));
 
 	if (w->mac == NULL) {
-		adw_window_title_set_subtitle(w->title, "Looking for the headset…");
+		adw_window_title_set_subtitle(w->title,
+					      "Looking for the headset…");
 	}
 	/* NULL mac means: find the headset ourselves, and keep looking */
 	start_session(w);
