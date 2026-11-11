@@ -47,8 +47,8 @@ int main(void) {
 		fprintf(stderr, "cannot register the test application\n");
 		return 1;
 	}
-	GtkWidget* window = mc_window_new(GTK_APPLICATION(app),
-					  "00:00:00:00:00:00");
+	GtkWidget* window =
+	    mc_window_new(GTK_APPLICATION(app), "00:00:00:00:00:00");
 	if (window == NULL) {
 		fprintf(stderr, "mc_window_new returned NULL\n");
 		return 1;

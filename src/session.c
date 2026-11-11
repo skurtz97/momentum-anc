@@ -125,10 +125,10 @@ static void handle_frame(mc_session* s, const gaia_frame* f) {
 }
 
 static const gaia_field readouts[] = {
-    GAIA_FIELD_BATTERY,   GAIA_FIELD_ANC,      GAIA_FIELD_ADAPTIVE,
-    GAIA_FIELD_TRANSPARENCY, GAIA_FIELD_BASS,  GAIA_FIELD_FIRMWARE,
-    GAIA_FIELD_EQ_BAND0,  GAIA_FIELD_EQ_BAND1, GAIA_FIELD_EQ_BAND2,
-    GAIA_FIELD_EQ_BAND3,  GAIA_FIELD_EQ_BAND4,
+    GAIA_FIELD_BATTERY,	     GAIA_FIELD_ANC,	  GAIA_FIELD_ADAPTIVE,
+    GAIA_FIELD_TRANSPARENCY, GAIA_FIELD_BASS,	  GAIA_FIELD_FIRMWARE,
+    GAIA_FIELD_EQ_BAND0,     GAIA_FIELD_EQ_BAND1, GAIA_FIELD_EQ_BAND2,
+    GAIA_FIELD_EQ_BAND3,     GAIA_FIELD_EQ_BAND4,
 };
 
 static void request(mc_session* s, gaia_field field) {
@@ -178,7 +178,8 @@ static gpointer thread_main(gpointer p) {
 				}
 				continue;
 			}
-			s->mac = g_strdup(found); /* only this thread writes it */
+			s->mac =
+			    g_strdup(found); /* only this thread writes it */
 		}
 
 		char* error = NULL;
@@ -202,7 +203,8 @@ static gpointer thread_main(gpointer p) {
 		read_all(s);
 
 		while (running(s)) {
-			const ssize_t n = read(fd, buf + have, sizeof buf - have);
+			const ssize_t n =
+			    read(fd, buf + have, sizeof buf - have);
 			if (n <= 0) {
 				break;
 			}
@@ -212,7 +214,8 @@ static gpointer thread_main(gpointer p) {
 				gaia_frame f;
 				const int used = gaia_parse(buf, have, &f);
 				if (used <= 0) {
-					break; /* keep the tail, it may start a frame */
+					break; /* keep the tail, it may start a
+						  frame */
 				}
 				handle_frame(s, &f);
 				have -= (size_t)used;
@@ -231,16 +234,18 @@ static gpointer thread_main(gpointer p) {
 			g_debug("close: %s", g_strerror(errno));
 		}
 
-		post(s, (struct post){.kind = POST_DISCONNECTED,
-				      .reason = g_strdup(have ? "bad stream"
-							      : "headset went away")});
+		post(s, (struct post){
+			    .kind = POST_DISCONNECTED,
+			    .reason = g_strdup(have ? "bad stream"
+						    : "headset went away")});
 		if (!pause_ms(s, 5000)) {
 			break;
 		}
 	}
 
 	/* the worker owns the struct once it stops: the events block belongs to
-	 * the caller, and idle callbacks carry their own copy of what they need */
+	 * the caller, and idle callbacks carry their own copy of what they need
+	 */
 	g_mutex_clear(&s->lock);
 	g_free(s->mac);
 	g_free(s);

@@ -72,9 +72,11 @@ size_t gaia_get_field(gaia_field field, uint8_t* out, size_t cap) {
 		case GAIA_FIELD_TRANSPARENCY:
 			return gaia_build(GAIA_CMD_MODE_GET, NULL, 0, out, cap);
 		case GAIA_FIELD_BASS:
-			return gaia_build(GAIA_CMD_EQ_BASS_GET, NULL, 0, out, cap);
+			return gaia_build(GAIA_CMD_EQ_BASS_GET, NULL, 0, out,
+					  cap);
 		case GAIA_FIELD_FIRMWARE:
-			return gaia_build(GAIA_CMD_FIRMWARE_GET, NULL, 0, out, cap);
+			return gaia_build(GAIA_CMD_FIRMWARE_GET, NULL, 0, out,
+					  cap);
 		default:
 			return 0;
 	}
@@ -108,6 +110,11 @@ size_t gaia_set_field(gaia_field field, int value, uint8_t* out, size_t cap) {
 					  cap);
 		case GAIA_FIELD_BATTERY:
 		case GAIA_FIELD_FIRMWARE:
+		case GAIA_FIELD_EQ_BAND0: /* handled above */
+		case GAIA_FIELD_EQ_BAND1:
+		case GAIA_FIELD_EQ_BAND2:
+		case GAIA_FIELD_EQ_BAND3:
+		case GAIA_FIELD_EQ_BAND4:
 			break;
 		case GAIA_FIELD_BASS:
 			payload[0] = value != 0;
@@ -155,8 +162,8 @@ size_t gaia_decode(const gaia_frame* f, gaia_field* fields, int* values,
 			values[0] = f->payload[0] != 0;
 			return 1;
 		case GAIA_CMD_EQ_BAND_REPLY:
-			/* the gain comes back without a band index, so the session
-			 * pairs it with the request it sent */
+			/* the gain comes back without a band index, so the
+			 * session pairs it with the request it sent */
 			return 0;
 		case GAIA_CMD_MODE_REPLY: {
 			/* (mode, state) pairs, one reply for every mode */
