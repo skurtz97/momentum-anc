@@ -46,9 +46,6 @@ sudo dnf install ./momentum-anc-0.1.0-1.fc45.x86_64.rpm
 
 # Debian / Ubuntu
 sudo apt install ./momentum-anc_0.1.0_amd64.deb
-
-# Flatpak (after the build step below)
-flatpak run io.github.momentum_anc
 ```
 
 ### From source
@@ -99,7 +96,7 @@ on the BlueZ alias instead of a UUID.
 
 ## Packaging
 
-All three packages install the same four files — the binary, a `.desktop` entry, an
+Both packages install the same four files — the binary, a `.desktop` entry, an
 AppStream metainfo file, and a scalable icon — and take their version from
 `meson.build`.
 
@@ -124,46 +121,6 @@ The script tars the working tree, stamps the current version into
 during the build. On a non-RPM host the header of the script has a ready-made
 `podman run … fedora` line that does the same in a container.
 
-### Flatpak
-
-```sh
-flatpak-builder --user --install --force-clean build-flatpak \
-    packaging/flatpak/io.github.momentum_anc.yaml
-flatpak run io.github.momentum_anc
-```
-
-The manifest builds the worktree against `org.gnome.Platform//50`. If
-`flatpak-builder` is not installed, use the builder app instead:
-
-```sh
-flatpak install --user flathub org.flatpak.Builder
-flatpak run --user --command=flatpak-builder org.flatpak.Builder \
-    --user --install --force-clean build-flatpak \
-    packaging/flatpak/io.github.momentum_anc.yaml
-```
-
-When the runtime lives in the user installation but the builder looks in the system
-one, add `--env=FLATPAK_SYSTEM_DIR=$HOME/.local/share/flatpak` to that command.
-
-The builder app also leaves `/app/bin/flatpak` in the exported launcher, and GLib
-drops such an entry completely, so the app never appears in the GNOME app grid (it
-shadows the RPM's copy of the same `.desktop` file, which is fine on its own). Fix
-the export after installing:
-
-```sh
-sed -i 's|^Exec=/app/bin/flatpak |Exec=/usr/bin/flatpak |' \
-    ~/.local/share/flatpak/app/io.github.momentum_anc/current/active/export/share/applications/io.github.momentum_anc.desktop
-update-desktop-database ~/.local/share/flatpak/exports/share/applications
-```
-
-A `flatpak-builder` from the distro writes `Exec=/usr/bin/flatpak …` itself, so
-installing that instead avoids the patch.
-
-The sandbox gets three things it needs: `--allow=bluetooth` for the RFCOMM socket,
-`--system-talk-name=org.bluez` so it can find the paired headset, and the usual
-Wayland/X11 plus DRI arguments for the window. Without the Bluetooth permission the
-window opens but the app cannot connect.
-
 ## How it works
 
 ```text
@@ -174,7 +131,7 @@ src/ui.[ch]       libadwaita window and rows
 src/main.c        argument parsing, application startup
 src/test-gaia.c   assert-based tests for build/parse/decode
 data/             .desktop, AppStream metainfo and icon, installed by meson
-packaging/        deb/rpm build scripts, rpm spec, flatpak manifest, icon source
+packaging/        deb/rpm build scripts, rpm spec, icon source
 docs/protocol.md  the protocol notes
 ```
 
