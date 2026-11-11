@@ -54,7 +54,10 @@ Implemented in `src/gaia.c` (`gaia_build`, `gaia_parse`, `gaia_set_field`,
 | ANC         | `1A04 [0/1]`             | `1A05`          |
 | Transparency| `1A00 [02, 0/1]`         | `1A01`          |
 | Adaptive    | `1A00 [03, 0/1]`         | `1A01`          |
+| Bass boost  | `1008 [0/1]`             | `1009`          |
+| EQ band n   | `1001 [n, gain]`         | `1002 [n]`      |
 | Battery     | —                        | `0603`          |
+| Firmware    | —                        | `1201`          |
 
 One `1A01` reply updates both the transparency and adaptive rows, which is why
 `gaia_decode()` returns a list of field updates rather than one.
@@ -73,6 +76,22 @@ verbatim.
 | Noise-control modes    | GET `1A01`, no payload     | `1B01` → 3 × `[mode, state]` | `01 02 02 00 03 01` |
 | Transparency level     | SET `1A02` `[0-100]`       | `1B02` | accepted, but see below |
 | Transparency level     | GET `1A03`                 | `1B03` → `[lvl]` | always `00` on this firmware |
+| Firmware version       | GET `1201`, no payload     | `1301` → 3 × u16 | `FF 03 00 00 04 95 12 01` → `00 03 00 26 00 03` (3.38.3) |
+| Model id               | GET `1206`, no payload     | `1306` → string | `4D 34 41 45 42 54 20 50 52 49 44 45 00` ("M4AEBT PRIDE") |
+| Equalizer range        | GET `1000`, no payload     | `1100` → `[bands, min, max]` | `05 C4 3C 00 00` → 5 bands, −60…+60 |
+| Bass boost             | SET `1008` `[0/1]`         | `1108`, empty | readback `1109` → `[0/1]` |
+| Bass boost             | GET `1009`, no payload     | `1109` → `[0/1]` | `01` when on |
+| EQ band gain           | SET `1001` `[band, gain]`  | `1101`, empty | `FF 03 00 02 04 95 10 01 00 E2` (−3 dB) |
+| EQ band gain           | GET `1002` `[band]`        | `1102` → `[gain]` | `FF 03 00 01 04 95 11 02 E2` |
+
+### Equalizer replies carry no band number
+
+`1102` returns the gain alone, so a client that asks for several bands has to pair
+each reply with the request that produced it, in order. The app keeps a queue of the
+outstanding band ids for exactly that reason. Gains are signed millibels (dB × 10) in
+one byte, which is why the captured −3 dB reads back as `E2` (−30).
+
+`1001` also accepts a payload with no value (`[band]`), which resets the band.
 
 ### Noise-control mode ids (`1A00` / `1B01`)
 
@@ -120,8 +139,6 @@ Verified to exist in the Sennheiser GAIA stack; useful if the UI grows.
 
 | feature              | request / response | note |
 |----------------------|--------------------|------|
-| Model id (string)    | `1206` → `1306`    | this unit: `M4AEBT PRIDE` |
-| Firmware version     | `1201` → `1301`    | 3 × u16, this unit `3.38.3` |
 | Codec in use         | `0800` → `0900`    | one byte, e.g. 5 = aptX HD |
 | Sidetone 0-5         | `0805` / `0806` → `0905` / `0906` | |
 | Smart Pause          | `080C` / `080D` → `090C` / `090D` | `[0/1]` |
@@ -129,7 +146,7 @@ Verified to exist in the Sennheiser GAIA stack; useful if the UI grows.
 | Auto-answer          | `080A` / `080B` → `090A` / `090B` | `[0/1]` |
 | Comfort call         | `0814` / `0815` → `0914` / `0915` | `[0/1]` |
 | Auto power-off       | `0600` / `0601` → `0700` / `0701` | `[timerID 0, value_u16]` |
-| Equalizer (UserEq)   | `1000`-`1002`, bass boost `1008` / `1009` | 5 bands, gain = dB × 10, signed i8 |
+| Adaptive EQ / sound profile | `0402` / `0403` → `0502` / `0503` | 0 = adaptive, 1 = neutral, 2 = bass |
 
 ## Sources
 

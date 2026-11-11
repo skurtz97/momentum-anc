@@ -50,7 +50,17 @@ int gaia_parse(const uint8_t* buf, size_t len, gaia_frame* out) {
 	return (int)(off + GAIA_HEADER_LEN + payload_len);
 }
 
+static bool is_eq_band(gaia_field field) {
+	return field >= GAIA_FIELD_EQ_BAND0 &&
+	       field < GAIA_FIELD_EQ_BAND0 + GAIA_EQ_BANDS;
+}
+
 size_t gaia_get_field(gaia_field field, uint8_t* out, size_t cap) {
+	if (is_eq_band(field)) {
+		const uint8_t band = (uint8_t)(field - GAIA_FIELD_EQ_BAND0);
+		return gaia_build(GAIA_CMD_EQ_BAND_GET, &band, 1, out, cap);
+	}
+
 	switch (field) {
 		case GAIA_FIELD_BATTERY:
 			return gaia_build(GAIA_CMD_BATTERY_GET, NULL, 0, out,
@@ -61,13 +71,23 @@ size_t gaia_get_field(gaia_field field, uint8_t* out, size_t cap) {
 			return gaia_build(GAIA_CMD_MODE_GET, NULL, 0, out, cap);
 		case GAIA_FIELD_TRANSPARENCY:
 			return gaia_build(GAIA_CMD_MODE_GET, NULL, 0, out, cap);
+		case GAIA_FIELD_BASS:
+			return gaia_build(GAIA_CMD_EQ_BASS_GET, NULL, 0, out, cap);
+		case GAIA_FIELD_FIRMWARE:
+			return gaia_build(GAIA_CMD_FIRMWARE_GET, NULL, 0, out, cap);
+		default:
+			return 0;
 	}
-
-	return 0;
 }
 
 size_t gaia_set_field(gaia_field field, int value, uint8_t* out, size_t cap) {
 	uint8_t payload[2];
+
+	if (is_eq_band(field)) {
+		payload[0] = (uint8_t)(field - GAIA_FIELD_EQ_BAND0);
+		payload[1] = (uint8_t)(int8_t)value; /* millibel, signed */
+		return gaia_build(GAIA_CMD_EQ_BAND_SET, payload, 2, out, cap);
+	}
 
 	switch (field) {
 		case GAIA_FIELD_ANC:
@@ -87,7 +107,12 @@ size_t gaia_set_field(gaia_field field, int value, uint8_t* out, size_t cap) {
 			return gaia_build(GAIA_CMD_MODE_SET, payload, 2, out,
 					  cap);
 		case GAIA_FIELD_BATTERY:
+		case GAIA_FIELD_FIRMWARE:
 			break;
+		case GAIA_FIELD_BASS:
+			payload[0] = value != 0;
+			return gaia_build(GAIA_CMD_EQ_BASS_SET, payload, 1, out,
+					  cap);
 	}
 
 	return 0;
@@ -110,6 +135,29 @@ size_t gaia_decode(const gaia_frame* f, gaia_field* fields, int* values,
 			fields[0] = GAIA_FIELD_ANC;
 			values[0] = f->payload[0] != 0;
 			return 1;
+		case GAIA_CMD_FIRMWARE_REPLY: {
+			/* three big-endian u16s: 3.38.3 -> 00 03 00 26 00 03 */
+			if (f->payload_len < 6 || max < 1) {
+				return 0;
+			}
+			const int major = (f->payload[0] << 8) | f->payload[1];
+			const int minor = (f->payload[2] << 8) | f->payload[3];
+			const int patch = (f->payload[4] << 8) | f->payload[5];
+			fields[0] = GAIA_FIELD_FIRMWARE;
+			values[0] = major * 10000 + minor * 100 + patch;
+			return 1;
+		}
+		case GAIA_CMD_EQ_BASS_REPLY:
+			if (f->payload_len < 1 || max < 1) {
+				return 0;
+			}
+			fields[0] = GAIA_FIELD_BASS;
+			values[0] = f->payload[0] != 0;
+			return 1;
+		case GAIA_CMD_EQ_BAND_REPLY:
+			/* the gain comes back without a band index, so the session
+			 * pairs it with the request it sent */
+			return 0;
 		case GAIA_CMD_MODE_REPLY: {
 			/* (mode, state) pairs, one reply for every mode */
 			size_t n = 0;

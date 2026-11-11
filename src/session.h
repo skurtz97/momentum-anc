@@ -14,11 +14,13 @@ typedef struct mc_events {
 	void (*changed)(void* data, gaia_field field, int value);
 } mc_events;
 
-/* Connects on a worker thread; events arrive on the GTK main loop. */
+/* Connects on a worker thread; events arrive on the GTK main loop. `ev` must
+ * outlive the session: mc_session_stop() only stops queueing new events. A
+ * NULL mac makes the worker keep looking for a paired MOMENTUM headset. */
 mc_session* mc_session_new(const mc_events* ev, void* data, const char* mac);
 
-/* Stops the worker and closes the socket. The struct is leaked on purpose:
- * idle callbacks may still be queued when the window goes away. */
+/* Stops the worker and closes the socket. The worker frees itself, so the
+ * handle must not be used afterwards; queued events are dropped. */
 void mc_session_stop(mc_session* s);
 
 /* Asks the headset for every field the UI shows. */

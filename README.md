@@ -1,9 +1,9 @@
 # Momentum ANC
 
 A small GTK 4 / libadwaita app for controlling a Sennheiser **MOMENTUM 4** from Linux:
-noise cancellation, transparency, adaptive mode, and battery level. It talks to the
-headset directly over Bluetooth (GAIA v3 over RFCOMM), so it needs no account, no
-phone, and no network.
+noise cancellation, transparency, adaptive mode, bass boost, a five-band equalizer,
+battery level, and the firmware version. It talks to the headset directly over
+Bluetooth (GAIA v3 over RFCOMM), so it needs no account, no phone, and no network.
 
 The full protocol notes — frame format, every command id, captures from real
 hardware — are in [`docs/protocol.md`](docs/protocol.md).
@@ -15,15 +15,18 @@ hardware — are in [`docs/protocol.md`](docs/protocol.md).
 | Active noise cancellation | on/off |
 | Transparency | on/off (the MOMENTUM 4 has no adjustable level) |
 | Adaptive noise cancellation | follows the noise around you |
+| Bass boost | on/off |
+| Equalizer | five bands, ±6 dB in 0.5 dB steps (the headset stores ±6 dB as −60…60) |
 | Battery | read as a percentage |
-| Reconnect | header button, after the headset was switched off or out of range |
+| Firmware | shown in the *Device* group |
+| Reconnect | automatic; header button to force it |
 
 All of it is verified against a real MOMENTUM 4 (`M4AEBT PRIDE`, firmware 3.38.3).
 Every change is written to the headset and read back, so each switch shows what the
 device actually accepted.
 
-Not implemented yet: equalizer, sidetone, smart pause, on-head detection, codec or
-firmware info, and device-initiated notifications (see [Limitations](#limitations)).
+Not implemented yet: sidetone, smart pause, on-head detection, sound profile, and
+device-initiated notifications (see [Limitations](#limitations)).
 
 ## Requirements
 
@@ -89,10 +92,12 @@ momentum-anc                      # first paired device whose alias starts with 
 momentum-anc --device 80:C3:BA:66:BE:5C
 ```
 
-The header bar shows the connection state; the rows are disabled while disconnected,
-and the refresh button reconnects. There is no device picker on purpose: the RFCOMM
-control channel is not advertised in the Bluetooth service list, so discovery matches
-on the BlueZ alias instead of a UUID.
+The header bar shows the connection state and the rows are disabled while
+disconnected. The app keeps looking for the headset on a worker thread, so it can be
+started before the headphones are switched on, and it reconnects by itself after the
+headset goes out of range; the refresh button only forces an immediate retry. There is
+no device picker on purpose: the RFCOMM control channel is not advertised in the
+Bluetooth service list, so discovery matches on the BlueZ alias instead of a UUID.
 
 ## Packaging
 
@@ -155,7 +160,6 @@ The UI never blocks on the socket.
 * Subscribe to device notifications (`0007` with feature ids) so the UI follows
   changes made from the phone.
 * Device picker when several headsets are paired.
-* Five-band equalizer (`1000`-`1002`, bass boost `1008`/`1009`).
 * Sidetone, smart pause, on-head detection, auto power-off.
 
 ## License

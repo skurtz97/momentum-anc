@@ -1,6 +1,6 @@
-/* Headless check that a window without a session survives row changes, which
- * used to dereference a NULL session and segfault. Needs a display, so run it
- * under xvfb-run. */
+/* Headless check that the window survives row changes with no link to the
+ * headset, which used to dereference a NULL session and segfault. The bogus
+ * address keeps it from ever connecting. Needs a display: xvfb-run. */
 #include <adwaita.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +24,20 @@ static AdwSwitchRow* find_switch(GtkWidget* root, const char* title) {
 	return NULL;
 }
 
+static GtkScale* find_scale(GtkWidget* root) {
+	for (GtkWidget* c = gtk_widget_get_first_child(root); c != NULL;
+	     c = gtk_widget_get_next_sibling(c)) {
+		if (GTK_IS_SCALE(c)) {
+			return GTK_SCALE(c);
+		}
+		GtkScale* found = find_scale(c);
+		if (found != NULL) {
+			return found;
+		}
+	}
+	return NULL;
+}
+
 int main(void) {
 	gtk_init();
 
@@ -33,14 +47,15 @@ int main(void) {
 		fprintf(stderr, "cannot register the test application\n");
 		return 1;
 	}
-	GtkWidget* window = mc_window_new(GTK_APPLICATION(app), NULL);
+	GtkWidget* window = mc_window_new(GTK_APPLICATION(app),
+					  "00:00:00:00:00:00");
 	if (window == NULL) {
 		fprintf(stderr, "mc_window_new returned NULL\n");
 		return 1;
 	}
 
 	const char* titles[] = {"Active noise cancellation", "Adaptive",
-				"Transparency"};
+				"Transparency", "Bass boost"};
 	for (size_t i = 0; i < G_N_ELEMENTS(titles); i++) {
 		AdwSwitchRow* row = find_switch(window, titles[i]);
 		if (row == NULL) {
@@ -50,6 +65,14 @@ int main(void) {
 		adw_switch_row_set_active(row, TRUE);
 		adw_switch_row_set_active(row, FALSE);
 	}
+
+	GtkScale* scale = find_scale(window);
+	if (scale == NULL) {
+		fprintf(stderr, "no equalizer slider found\n");
+		return 1;
+	}
+	gtk_range_set_value(GTK_RANGE(scale), -3.5);
+	gtk_range_set_value(GTK_RANGE(scale), 0);
 
 	gtk_window_destroy(GTK_WINDOW(window));
 	g_object_unref(app);
